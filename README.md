@@ -10,3 +10,6 @@ Stonkreader_app.py ---> textastic_app.py
 Stonkreader_parsers.py ---> textastic_parsers.py
 - Define different parsing schemes
 
+TODO
+
+- convert all text files to lowercase
