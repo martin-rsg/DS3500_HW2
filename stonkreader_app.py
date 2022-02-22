@@ -20,11 +20,13 @@ def main():
     sr.load_prices('F_Daily_Close_Prices.csv')
     # print(sr.prices)
 
-    sr.run_sentiment_analysis()
+    # sr.run_sentiment_analysis()
 
-    years = [2017, 2018, 2019, 2020, 2021]
-    sr.compare_sentiment_stockprice(years=years)
+    # years = [2017, 2018, 2019, 2020, 2021]
+    # sr.compare_sentiment_stockprice(years=years)
 
+    years = [2016, 2017, 2018, 2019, 2020]
+    sr.wordcount_sankey(years)
 
     # pp.pprint(sr.data)
     # sr.compare_num_words()
