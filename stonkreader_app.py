@@ -20,6 +20,8 @@ def main():
     sr.load_prices('F_Daily_Close_Prices.csv')
     # print(sr.prices)
 
+    stop_words = ('that', )
+    # sr.load_stop_words()
     # sr.run_sentiment_analysis()
 
     # years = [2017, 2018, 2019, 2020, 2021]

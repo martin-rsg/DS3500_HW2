@@ -3,7 +3,6 @@ filename: textastic.py
 
 description: A reusable library for text analysis and comparison
 """
-
 from collections import Counter, defaultdict
 import random as rnd
 import pandas as pd
@@ -26,7 +25,7 @@ class Stonkreader:
             self.data[k][label] = v
 
     @staticmethod
-    def _default_parser(filename):
+    def _default_parser():
         results = {
             'wordcount': Counter("to be or not to be".split(" ")),
             'numwords': rnd.randrange(10, 50)
@@ -35,7 +34,7 @@ class Stonkreader:
 
     def load_text(self, filename, label=None, parser=None):
         if parser is None:
-            results = Stonkreader._default_parser(filename)
+            results = Stonkreader._default_parser()
         else:
             results = parser(filename)
 
@@ -112,17 +111,24 @@ class Stonkreader:
     def code_mapping(self, df, src, targ):
         """ map labels in src and targ columns to integers, built in class """
 
+        print(df[src])
+
+
         labels = list(df[src]) + list(df[targ])
         # labels = sorted(list(set(labels)))
 
+        print('labels')
+        print(labels)
+
         codes = list(range(len(labels)))
-        # print(codes)
+
+        print('codes')
+        print(codes)
+
+
 
         lcmap = dict(zip(labels, codes))
-        # print(lcmap)
-
-        df['src'] = lcmap
-        df['targ'] = lcmap
+        df = df.replace({src: lcmap, targ: lcmap})
         print(df)
 
         return df, labels
@@ -143,6 +149,23 @@ class Stonkreader:
 
         df = df[['word'] + [col for col in df.columns if col != 'word']]
         df = df.drop(['index'], axis=1)
+
+        # init clean_df for storing new df with top words
+        clean_df = pd.DataFrame()
+        if word_list is not None:
+            # change targ to df['word'] where word is in the word list
+            for word in word_list:
+                df_to_add = df.loc[df['word'] == word]
+                clean_df = clean_df.append(df_to_add)
+
+        else:
+            clean_df = df.copy(deep=True)
+            clean_df['sum_words'] = clean_df.sum(axis=1)
+            clean_df = clean_df.sort_values(by=['sum_words'], ascending=False)
+            clean_df = clean_df.head(k)
+            clean_df.drop('sum_words', inplace=True, axis=1)
+
+        df = clean_df
 
         # Assemble df that fits sankey required input format
         # this is hacky, we know, but in the interest of time this was the best option.
@@ -166,36 +189,18 @@ class Stonkreader:
 
         # Adopted from HW1:
 
-        src = df['filename']
-        targ = df['word']
-        vals = "count"
+        src = 'word'
+        targ = 'file'
+        vals = "count_word"
 
-        if word_list is not None:
-            clean_pd = pd.DataFrame()
-            # change targ to df['word'] where word is in the word list
-            for word in word_list:
-                df_to_add = df.loc[df['word'] == word]
-                clean_df = pd.concat[clean_df, df_to_add]
-                df = clean_df
-        else:
-            df_top_words = df.groupby(by='word').sum()
-            print("df top words", df_top_words)
-            top_words = df_top_words.head(k)
-            print("top words", top_words)
-
-            for word in top_words:
-                df_to_add = df.loc[df['word'] == word]
-                clean_df = pd.concat[clean_df, df_to_add]
-                df = clean_df
-
-        df, labels = self.code_mapping(df, src, targ)
+        sankey_df, labels = self.code_mapping(sankey_df, src, targ)
 
         if vals:
-            value = df[vals]
+            value = sankey_df[vals]
         else:
-            value = [1] * df.shape[0]
+            value = [1] * sankey_df.shape[0]
 
-        link = {'source': df[src], 'target': df[targ], 'value': value}
+        link = {'source': sankey_df[src], 'target': sankey_df[targ], 'value': value}
 
         node = {'pad': 100, 'thickness': 10,
                 'line': {'color': 'black', 'width': 10},
@@ -205,20 +210,20 @@ class Stonkreader:
         fig = go.Figure(sk)
         fig.show()
 
-def compare_num_words(self):
+    def compare_num_words(self):
         """This is an example, we probably shouldnt include this"""
         num_words = self.data['numwords']
         for label, nw in num_words.items():
             plt.bar(label, nw)
         plt.show()
 
-def load_stop_words(line_list):
-    """ A list of common or stop words. These get filtered from each file automatically """
-    stop_list = []
-    for line in line_list:
-        split_list = line.split()
-        length = len(split_list)
-        last_word = split_list[length - 1]
-        if line != '':
-            stop_list.append(last_word)
-    return(stop_list)
+    def load_stop_words(self, line_list):
+        """ A list of common or stop words. These get filtered from each file automatically """
+        stop_list = []
+        for line in line_list:
+            split_list = line.split()
+            length = len(split_list)
+            last_word = split_list[length - 1]
+            if line != '':
+                stop_list.append(last_word)
+        return stop_list
