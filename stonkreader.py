@@ -8,10 +8,13 @@ import random as rnd
 import pandas as pd
 import matplotlib.pyplot as plt
 import pprint as pp
+
 from textblob import TextBlob
 import statistics
 import datetime as dt
 import plotly.graph_objects as go
+import wordcloud as wc
+
 
 class Stonkreader:
 
@@ -19,6 +22,7 @@ class Stonkreader:
         """Constructor"""
         self.data = defaultdict(dict)
         self.prices = pd.DataFrame()
+        self.stop_words = []
 
     def _save_results(self, label, results):
         for k, v in results.items():
@@ -36,7 +40,7 @@ class Stonkreader:
         if parser is None:
             results = Stonkreader._default_parser()
         else:
-            results = parser(filename)
+            results = parser(filename, self)
 
         if label is None:
             label = filename
@@ -113,7 +117,6 @@ class Stonkreader:
 
         print(df[src])
 
-
         labels = list(df[src]) + list(df[targ])
         # labels = sorted(list(set(labels)))
 
@@ -124,8 +127,6 @@ class Stonkreader:
 
         print('codes')
         print(codes)
-
-
 
         lcmap = dict(zip(labels, codes))
         df = df.replace({src: lcmap, targ: lcmap})
@@ -210,6 +211,26 @@ class Stonkreader:
         fig = go.Figure(sk)
         fig.show()
 
+    def word_cloud(self, file_list):
+        rows = 2
+        columns = 3
+        fig = plt.figure(figsize=(columns, rows), dpi=200)
+        plt.title(f'A {rows}X{columns} Array of Presidential Poetry Readings')
+        plt.axis('off')
+
+        cloud = wc.WordCloud()
+        img = cloud.generate(file_list)
+        fig.add_subplot(rows, columns)
+        plt.imshow(img)
+
+        # Remove inner axis labels
+        for ax in fig.get_axes():
+            ax.label_outer()
+
+        # Save figure to disk
+        plt.savefig('image_array.png')
+        plt.show()
+
     def compare_num_words(self):
         """This is an example, we probably shouldnt include this"""
         num_words = self.data['numwords']
@@ -217,13 +238,15 @@ class Stonkreader:
             plt.bar(label, nw)
         plt.show()
 
-    def load_stop_words(self, line_list):
+    def load_stop_words(self, file):
         """ A list of common or stop words. These get filtered from each file automatically """
+
         stop_list = []
-        for line in line_list:
-            split_list = line.split()
-            length = len(split_list)
-            last_word = split_list[length - 1]
-            if line != '':
-                stop_list.append(last_word)
+        with open(file) as f:
+            for line in f:
+                split_list = line.split()
+                length = len(split_list)
+                last_word = split_list[length - 1]
+                if line != '':
+                    stop_list.append(last_word.lower())
         return stop_list

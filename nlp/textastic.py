@@ -8,6 +8,7 @@ from collections import Counter, defaultdict
 import random as rnd
 import matplotlib.pyplot as plt
 
+
 class Textastic:
 
     def __init__(self):
@@ -26,29 +27,19 @@ class Textastic:
         }
         return results
 
-
     def load_text(self, filename, label=None, parser=None):
         if parser is None:
             results = Textastic._default_parser(filename)
         else:
-            results = parser(filename)
+            results = parser(filename, self)
 
         if label is None:
             label = filename
 
         self._save_results(label, results)
 
-
     def compare_num_words(self):
         num_words = self.data['numwords']
         for label, nw in num_words.items():
             plt.bar(label, nw)
         plt.show()
-
-
-
-
-
-
-
-

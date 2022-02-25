@@ -1,8 +1,6 @@
 import json
-from collections import Counter
-import csv
-import pandas as pd
 import re
+from collections import Counter
 
 
 def json_parser(filename):
@@ -17,7 +15,7 @@ def json_parser(filename):
     return {'wordcount': wc, 'numwords': num}
 
 
-def txt_parser_CIQ(filename):
+def txt_parser_CIQ(filename, sr):
     """ Loads in txt data copied in from S&P Capital IQ Transcripts, and cleans punctuation and newlines """
     with open(filename) as f:
         lines = [line.strip() for line in f]
@@ -25,15 +23,18 @@ def txt_parser_CIQ(filename):
     words_nested = [line.split(" ") for line in lines]
     words = [word for sublist in words_nested for word in sublist if word != '']
     # remove periods, capitalization
-    end_punct = [",",".","!","?",":",";"]
+    end_punct = [",", ".", "!", "?", ":", ";"]
     clean_words = list()
     for word in words:
         l_word = word.lower()
+        if l_word in sr.stop_words:
+            continue
         if l_word[-1] in end_punct:
             clean_words.append(l_word[:-1])
     wc = Counter(clean_words)
     num = len(clean_words)
     return {'wordcount': wc, 'numwords': num}
+
 
 def split_into_sentences(filename):
     """ Taken from stackexchange with a few modifications,
@@ -58,36 +59,33 @@ def split_into_sentences(filename):
     websites = "[.](com|net|org|io|gov)"
 
     text = " " + text + "  "
-    text = text.replace("\n"," ")
-    text = re.sub(prefixes,"\\1<prd>",text)
-    text = re.sub(websites,"<prd>\\1",text)
-    if "Ph.D" in text: text = text.replace("Ph.D.","Ph<prd>D<prd>")
-    text = re.sub("\s" + alphabets + "[.] "," \\1<prd> ",text)
-    text = re.sub(acronyms+" "+starters,"\\1<stop> \\2",text)
-    text = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets + "[.]","\\1<prd>\\2<prd>\\3<prd>",text)
-    text = re.sub(alphabets + "[.]" + alphabets + "[.]","\\1<prd>\\2<prd>",text)
-    text = re.sub(" "+suffixes+"[.] "+starters," \\1<stop> \\2",text)
-    text = re.sub(" "+suffixes+"[.]"," \\1<prd>",text)
-    text = re.sub(" " + alphabets + "[.]"," \\1<prd>",text)
-    if "”" in text: text = text.replace(".”","”.")
-    if "\"" in text: text = text.replace(".\"","\".")
-    if "!" in text: text = text.replace("!\"","\"!")
-    if "?" in text: text = text.replace("?\"","\"?")
-    text = text.replace(".",".<stop>")
-    text = text.replace("?","?<stop>")
-    text = text.replace("!","!<stop>")
-    text = text.replace("<prd>",".")
+    text = text.replace("\n", " ")
+    text = re.sub(prefixes, "\\1<prd>", text)
+    text = re.sub(websites, "<prd>\\1", text)
+    if "Ph.D" in text: text = text.replace("Ph.D.", "Ph<prd>D<prd>")
+    text = re.sub("\s" + alphabets + "[.] ", " \\1<prd> ", text)
+    text = re.sub(acronyms + " " + starters, "\\1<stop> \\2", text)
+    text = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets + "[.]", "\\1<prd>\\2<prd>\\3<prd>", text)
+    text = re.sub(alphabets + "[.]" + alphabets + "[.]", "\\1<prd>\\2<prd>", text)
+    text = re.sub(" " + suffixes + "[.] " + starters, " \\1<stop> \\2", text)
+    text = re.sub(" " + suffixes + "[.]", " \\1<prd>", text)
+    text = re.sub(" " + alphabets + "[.]", " \\1<prd>", text)
+    if "”" in text: text = text.replace(".”", "”.")
+    if "\"" in text: text = text.replace(".\"", "\".")
+    if "!" in text: text = text.replace("!\"", "\"!")
+    if "?" in text: text = text.replace("?\"", "\"?")
+    text = text.replace(".", ".<stop>")
+    text = text.replace("?", "?<stop>")
+    text = text.replace("!", "!<stop>")
+    text = text.replace("<prd>", ".")
     sentences = text.split("<stop>")
     sentences = sentences[:-1]
-    sentences = [s.strip().replace("\\n","").replace("'', ","") for s in sentences]
+    sentences = [s.strip().replace("\\n", "").replace("'', ", "") for s in sentences]
 
     return sentences
 
 
-def txt_sentence_parser(filename):
+def txt_sentence_parser(filename, sr=None):
     """ splits text into sentences, returned as dict """
     sentences = split_into_sentences(filename)
     return {'sentences': sentences}
-
-
-
